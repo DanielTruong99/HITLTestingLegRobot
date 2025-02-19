@@ -1,11 +1,12 @@
 import rclpy
 import numpy as np
 import sys
+import signal
 from rclpy.node import Node
 from sensor_msgs.msg import JointState, Imu
 
 from .controllers import RobotConfig
-from .controllers import RobotController
+from .controllers import RobotController, RobotEvent
 
 
 class ControllerNode(Node):
@@ -24,9 +25,11 @@ class ControllerNode(Node):
 
         config = RobotConfig.from_yaml(config_file)
         self.robot_controller = RobotController(config)
+        self._prev_is_robot_ready = False
 
         # Create a timer to call the control loop
         self.create_timer(1.0 / 50.0, self.timer_callback)
+        self.timer_counter = 0
 
         # create a subscriber to the joint states
         self.joint_state_sub = self.create_subscription(
@@ -45,28 +48,35 @@ class ControllerNode(Node):
         self.joint_cmd_pub = self.create_publisher(JointState, "joint_commands", 10)
 
     def timer_callback(self):
-        """
-        Timer callback to compute the action.
-        """
-        # Compute the action from the robot controller
-        cmd = np.ndarray([1.5, 0.0, 0.0], shape=(3,), dtype=float)
-        joint_cmds = self.robot_controller.compute(cmd)
-
-        # Compose and publish the joint command message
-        msg = JointState()
-        msg.position = joint_cmds
-        msg.velocity = [0.0] * len(joint_cmds)
-        msg.effort = [0.0] * len(joint_cmds)
-        self.joint_cmd_pub.publish(msg)
+        self.robot_controller.push_event(RobotEvent.TIMER_EVENT)
+        self.timer_counter += 1
+        if self.timer_counter % 2.0 / (1.0/50.0):
+            self.robot_controller.push_event(RobotEvent.TIME_OUT_2S)
+            
 
 
 def main(args=None):
     rclpy.init(args=args)
     node = ControllerNode()
-    rclpy.spin(node)
 
-    node.destroy_node()
-    rclpy.shutdown()
+    def signal_handler(sig, frame):
+        node.destroy_node()
+        rclpy.shutdown()
+        sys.exit(0)
+
+    signal.signal(signal.SIGINT, signal_handler)
+    signal.signal(signal.SIGTERM, signal_handler)
+
+    try:
+        while rclpy.ok():
+            node.robot_controller.run()
+            rclpy.spin_once(node)
+            
+    except KeyboardInterrupt:
+        pass
+    finally:
+        node.destroy_node()
+        rclpy.shutdown()
 
 
 if __name__ == "__main__":

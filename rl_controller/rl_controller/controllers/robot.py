@@ -1,5 +1,6 @@
 import rclpy
 import numpy as np
+import inspect
 from sensor_msgs.msg import JointState, Imu
 
 from .utilities import get_gravity_orientation
@@ -14,6 +15,26 @@ class Robot(object):
         """
         self.leg_states = LegState(config)
         self.base_state = BaseState(config)
+
+        # self.callback_flags = {
+        #     "joint_states_callback": False,
+        #     "imu_callback": False,
+        # }
+        self.callback_flags = {
+            key: False
+            for key, _ in inspect.getmembers(self, predicate=inspect.ismethod)
+            if key.endswith("_callback")
+        }
+
+    @property
+    def is_ready(self) -> bool:
+        """
+        Check if the sensor datas has came.
+
+        Returns:
+            bool: True if the robot is ready
+        """
+        return all(self.callback_flags.values())
 
     @property
     def vB(self):
@@ -94,7 +115,12 @@ class Robot(object):
             velocity if np.all(np.isfinite(velocity)) else self.leg_states.velocity
         )
 
-    def imu_callback(self, msg):
+        # Set the callback flag to True
+        if self.callback_flags["joint_states_callback"] is False:
+            self.callback_flags["joint_states_callback"] = True
+            
+
+    def imu_callback(self, msg: Imu) -> None:
         """
         Callback for the ros imu subscriber.
 
@@ -120,3 +146,7 @@ class Robot(object):
             if np.all(np.isfinite(angular_velocity))
             else self.base_state.wB
         )
+
+        # Set the callback flag to True
+        if self.callback_flags["imu_callback"] is False:
+            self.callback_flags["imu_callback"] = True
