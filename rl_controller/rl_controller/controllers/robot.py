@@ -4,21 +4,22 @@ from sensor_msgs.msg import JointState, Imu
 
 from .utilities import get_gravity_orientation
 from .robot_state import LegState, BaseState
-from .robot_config import Config
+from .robot_config import RobotConfig
+
 
 class Robot(object):
-    def __init__(self, config: Config) -> None:
+    def __init__(self, config: RobotConfig) -> None:
         """
         Initialize the robot object.
         """
         self.leg_states = LegState(config)
         self.base_state = BaseState(config)
-    
+
     @property
     def vB(self):
         """
         Retrieve the velocity of the robot's base.
-        
+
         Returns:
             numpy.ndarray: The velocity vector of the robot's base.
         """
@@ -28,7 +29,7 @@ class Robot(object):
     def wB(self):
         """
         Retrieve the angular velocity of the robot's base.
-        
+
         Returns:
             numpy.ndarray: The angular velocity vector of the robot's base.
         """
@@ -38,7 +39,7 @@ class Robot(object):
     def orientation(self):
         """
         Retrieve the orientation of the robot's base.
-        
+
         Returns:
             numpy.ndarray: The orientation quaternion of the robot's base.
         """
@@ -58,7 +59,7 @@ class Robot(object):
     def joint_positions(self):
         """
         Retrieve the joint positions of the robot.
-        
+
         Returns:
             numpy.ndarray: The joint positions.
         """
@@ -68,7 +69,7 @@ class Robot(object):
     def joint_velocities(self):
         """
         Retrieve the joint velocities of the robot.
-        
+
         Returns:
             numpy.ndarray: The joint velocities.
         """
@@ -86,8 +87,12 @@ class Robot(object):
         velocity = np.array(msg.velocity)
 
         # Check is finite values and update the joint states
-        self.leg_states.position = position if np.all(np.isfinite(position)) else self.leg_states.position
-        self.leg_states.velocity = velocity if np.all(np.isfinite(velocity)) else self.leg_states.velocity
+        self.leg_states.position = (
+            position if np.all(np.isfinite(position)) else self.leg_states.position
+        )
+        self.leg_states.velocity = (
+            velocity if np.all(np.isfinite(velocity)) else self.leg_states.velocity
+        )
 
     def imu_callback(self, msg):
         """
@@ -97,9 +102,21 @@ class Robot(object):
             msg (Imu): message from the imu topic
         """
         # Cache the orientation, angular velocity
-        orientation = np.array([msg.orientation.x, msg.orientation.y, msg.orientation.z, msg.orientation.w])
-        angular_velocity = np.array([msg.angular_velocity.x, msg.angular_velocity.y, msg.angular_velocity.z])
+        orientation = np.array(
+            [msg.orientation.x, msg.orientation.y, msg.orientation.z, msg.orientation.w]
+        )
+        angular_velocity = np.array(
+            [msg.angular_velocity.x, msg.angular_velocity.y, msg.angular_velocity.z]
+        )
 
         # Check is finite values and update the base states
-        self.base_state.orientation = orientation if np.all(np.isfinite(orientation)) else self.base_state.orientation
-        self.base_state.wB = angular_velocity if np.all(np.isfinite(angular_velocity)) else self.base_state.wB
+        self.base_state.orientation = (
+            orientation
+            if np.all(np.isfinite(orientation))
+            else self.base_state.orientation
+        )
+        self.base_state.wB = (
+            angular_velocity
+            if np.all(np.isfinite(angular_velocity))
+            else self.base_state.wB
+        )

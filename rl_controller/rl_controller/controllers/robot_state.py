@@ -1,9 +1,10 @@
 import numpy as np
 
-from .robot_config import Config
+from .robot_config import RobotConfig
+
 
 class LegState(object):
-    def __init__(self, config: Config) -> None:
+    def __init__(self, config: RobotConfig) -> None:
         """
         Initialize the leg state object.
         """
@@ -12,7 +13,7 @@ class LegState(object):
 
 
 class BaseState(object):
-    def __init__(self, config: Config) -> None:
+    def __init__(self, config: RobotConfig) -> None:
         """
         Initialize the base state object.
         """

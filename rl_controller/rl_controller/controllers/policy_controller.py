@@ -1,9 +1,14 @@
 import torch
+from torch.jit import ScriptModule
 import numpy as np
 import rclpy
 
+from .robot import Robot
+from .robot_config import RobotConfig
+
+
 class PolicyController:
-    def __init__(self, config, robot) -> None:
+    def __init__(self, config: RobotConfig, robot: Robot) -> None:
         """
         Import the policy, initialize process variables.
 
@@ -46,13 +51,15 @@ class PolicyController:
 
         """
         try:
-            self.policy = torch.jit.load(policy_file_path)
+            self.policy: ScriptModule = torch.jit.load(policy_file_path)
             self.policy.eval()
             self.policy.to(self.config.device)
-            rclpy.logger._root_logger.info(f"Policy loaded from {policy_file_path}")
-        
+            rclpy.logging._root_logger.info(f"Policy loaded from {policy_file_path}")
+
         except Exception as e:
-            rclpy.logger._root_logger.error(f"Failed to load policy from {policy_file_path}: {e}")
+            rclpy.logging._root_logger.error(
+                f"Failed to load policy from {policy_file_path}: {e}"
+            )
 
     def _compute_action(self, observation: np.ndarray) -> np.ndarray:
         """
@@ -65,9 +72,11 @@ class PolicyController:
             np.ndarray: the action
         """
         with torch.no_grad():
-            observation = torch.from_numpy(observation).view(1, -1).float().to(self.config.device)
+            observation = (
+                torch.from_numpy(observation).view(1, -1).float().to(self.config.device)
+            )
             action = self.policy(observation).detach().view(-1).numpy()
-    
+
         return action
 
     def _compute_observation(self, command: np.ndarray) -> np.ndarray:
@@ -93,8 +102,6 @@ class PolicyController:
         observation[6:9] = projected_g
         observation[9:12] = command
         observation[12 : 12 + num_actions] = q
-        observation[12 + num_actions : 12 + 2*num_actions] = q_dot
-        observation[12 + 2*num_actions : 12 + 3*num_actions] = self._previous_action
+        observation[12 + num_actions : 12 + 2 * num_actions] = q_dot
+        observation[12 + 2 * num_actions : 12 + 3 * num_actions] = self._previous_action
         return observation
-
-            
