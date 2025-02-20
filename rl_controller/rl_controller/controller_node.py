@@ -17,15 +17,12 @@ class ControllerNode(Node):
         super().__init__("rl_controller")
 
         # Load the robot configuration and initialize the robot controller
-        # Declare and get ROS parameters
         self.declare_parameter("config_file", "configs/leg_robot.yaml")
         config_file = (
             self.get_parameter("config_file").get_parameter_value().string_value
         )
-
         config = RobotConfig.from_yaml(config_file)
         self.robot_controller = RobotController(config)
-        self._prev_is_robot_ready = False
 
         # Create a timer to call the control loop
         self.create_timer(1.0 / 50.0, self.timer_callback)
@@ -70,6 +67,10 @@ def main(args=None):
     try:
         while rclpy.ok():
             node.robot_controller.run()
+            # #TODO: add property is_control_action_ready to robot_controller
+            # if node.robot_controller.is_control_action_ready:
+            #     node.robot_controller.publish_joint_commands(node.joint_cmd_pub)
+            
             rclpy.spin_once(node)
             
     except KeyboardInterrupt:
