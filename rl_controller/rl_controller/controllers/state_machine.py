@@ -1,12 +1,15 @@
 from enum import Enum
+from dataclasses import dataclass
 
-class BuiltInEvent(Enum):
+@dataclass
+class BuiltInEvent:
     INIT_SIG = 1
     ENTRY_SIG = 2
     EXIT_SIG = 3
     USER_SIG = 4
 
-class Status(Enum):
+@dataclass
+class Status:
     TRAN_STATUS = 1
     HANDLED_STATUS = 2
     IGNORED_STATUS = 3
@@ -47,7 +50,7 @@ class FSM(object):
         status = self.state(event)
 
         if status is Status.TRAN_STATUS:
-            prev_state(self, BuiltInEvent.EXIT_SIG)
+            prev_state(BuiltInEvent.EXIT_SIG)
             self.state(BuiltInEvent.ENTRY_SIG)
 
     def transition_to(self, state) -> None:

@@ -90,18 +90,13 @@ class PolicyController:
             np.ndarray: the observation [v, w, projected_g, command, q, q_dot, previous_action]
         """
         observation = np.zeros(self.config.observation_dim)
-        v_B = self.robot.vB
-        w_B = self.robot.wB
-        projected_g = self.robot.projected_g
-        q = self.robot.joint_positions
-        q_dot = self.robot.joint_velocities
+        
         num_actions = self.config.action_dim
-
-        observation[:3] = v_B
-        observation[3:6] = w_B
-        observation[6:9] = projected_g
+        observation[:3] = self.robot.vB
+        observation[3:6] = self.robot.wB
+        observation[6:9] = self.robot.projected_g
         observation[9:12] = command
-        observation[12 : 12 + num_actions] = q
-        observation[12 + num_actions : 12 + 2 * num_actions] = q_dot
+        observation[12 : 12 + num_actions] = self.robot.joint_positions
+        observation[12 + num_actions : 12 + 2 * num_actions] = self.robot.joint_velocities
         observation[12 + 2 * num_actions : 12 + 3 * num_actions] = self._previous_action
         return observation
