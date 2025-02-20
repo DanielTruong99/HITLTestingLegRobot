@@ -1,5 +1,0 @@
-action_dim: 10
-observation_dim: 42
-device: cpu
-policy_file_path: models/leg_robot_policy.pth
-
