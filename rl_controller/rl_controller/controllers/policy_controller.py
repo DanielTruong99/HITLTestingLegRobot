@@ -47,8 +47,6 @@ class PolicyController(object):
         """
         observation = self._compute_observation(command)
         action = self._compute_action(observation)
-
-        action = action.cpu().numpy()
         joint_cmds = self._process_action(action)
         return joint_cmds
 
@@ -90,7 +88,7 @@ class PolicyController(object):
         """
         self._previous_action = action
         self._policy_counter += 1
-        return action * self.config.action_scale + self.config.default_joint_position
+        return action * self.config.action_scale + self.config.default_joint_positions
 
     def _compute_action(self, observation: np.ndarray) -> np.ndarray:
         """
@@ -118,7 +116,7 @@ class PolicyController(object):
             command (np.ndarray): the action command (v_x, v_y, w_z)
 
         Returns:
-            np.ndarray: the observation [w, projected_g, command, q, q_dot, previous_action, phase]
+            np.ndarray: the observation [w, projected_g, command, q_rel, q_dot, previous_action, phase]
         """
         observation = np.zeros(self.config.observation_dim)
         
@@ -132,7 +130,7 @@ class PolicyController(object):
         observation[:3] = self.robot.wB
         observation[3:6] = self.robot.projected_g
         observation[6:9] = command
-        observation[9 : 9 + num_actions] = self.robot.joint_positions
+        observation[9 : 9 + num_actions] = self.robot.joint_positions - self.config.default_joint_positions
         observation[9 + num_actions : 9 + 2 * num_actions] = self.robot.joint_velocities
         observation[9 + 2 * num_actions : 9 + 3 * num_actions] = self._previous_action
         observation[9 + 3 * num_actions] = sin_phase

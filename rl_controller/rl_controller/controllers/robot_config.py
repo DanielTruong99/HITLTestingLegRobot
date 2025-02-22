@@ -9,6 +9,17 @@ class RobotConfig:
     device: str
     policy_file_path: str
 
+    action_dim: int
+    observation_dim: int
+    device: str
+    control_rate: int
+    policy_file_path: str
+    action_scale: float
+    default_joint_positions: List[float]
+    kps: List[float]
+    kds: List[float]
+
+    
     @classmethod
     def from_yaml(cls, config_file_path: str) -> 'RobotConfig':
         """

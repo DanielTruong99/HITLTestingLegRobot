@@ -33,18 +33,19 @@ class RobotController(object):
 
         # Initialize the command, action
         self._command = np.zeros(3)
+        self._command[0] = 0.0
 
         # Initialize some special messages 
         self._joint_cmd_stop_msg = JointState()
-        self._joint_cmd_stop_msg.position = [0.0] * self.robot.num_joints
-        kps = [0.0] * self.robot.num_joints
-        kds = [0.0] * self.robot.num_joints
+        self._joint_cmd_stop_msg.position = [0.0] * config.action_dim
+        kps = [0.0] * config.action_dim
+        kds = [0.0] * config.action_dim
         self._joint_cmd_stop_msg.velocity = kps + kds
         
         self._joint_cmd_damping_msg = JointState()
-        self._joint_cmd_damping_msg.position = [0.0] * self.robot.num_joints
-        kps = [1000.0] * self.robot.num_joints
-        kds = [10.0] * self.robot.num_joints
+        self._joint_cmd_damping_msg.position = [0.0] * config.action_dim
+        kps = [1000.0] * config.action_dim
+        kds = [10.0] * config.action_dim
         self._joint_cmd_damping_msg.velocity = kps + kds
 
     def stop(self) -> None:

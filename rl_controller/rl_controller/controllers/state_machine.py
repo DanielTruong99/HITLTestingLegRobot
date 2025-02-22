@@ -1,7 +1,9 @@
 import rclpy
 from sensor_msgs.msg import JointState
 from dataclasses import dataclass
-from .robot_controller import RobotController
+from typing import TYPE_CHECKING, Any
+if TYPE_CHECKING:
+    from .robot_controller import RobotController
 from .robot import Robot
 from ..finite_state_machine import fsm as state_machine
 
@@ -12,7 +14,7 @@ class RobotEvent(state_machine.BuiltInEvent):
  
 
 class RobotFSM(state_machine.FSM):
-    def __init__(self, robot: Robot, controller: RobotController) -> None:
+    def __init__(self, robot: Robot, controller: Any) -> None:
         """
         Initialize the robot FSM.
 
@@ -96,8 +98,8 @@ class RobotFSM(state_machine.FSM):
             joint_cmd_msg = JointState()
             for joint_cmd in joint_cmds:
                 joint_cmd_msg.position.append(joint_cmd)
-            joint_cmd_msg.velocity = self.robot_controller.config.kps + self.robot_controller.config.kds
-            self.node_handler.joint_cmd_pub.publish(joint_cmd_msg)
+            joint_cmd_msg.velocity = self.controller.current_controller.config.kps + self.controller.current_controller.config.kds
+            self.controller.node_handler.joint_cmd_pub.publish(joint_cmd_msg)
 
             status = state_machine.Status.HANDLED_STATUS
         

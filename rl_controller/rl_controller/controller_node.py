@@ -24,14 +24,17 @@ class ControllerNode(Node):
         config = RobotConfig.from_yaml(config_file)
         self.config = config
 
+        # Initialize the robot controller
+        self.robot_controller = RobotController(config, self)
+
         # Create a timer to call the control loop
-        self.create_timer(config.control_rate, self.timer_callback)
+        self.create_timer(1.0 / config.control_rate, self.timer_callback)
         self.timer_counter = 0
 
         # create a subscriber to the joint states
         self.joint_state_sub = self.create_subscription(
             JointState,
-            "joint_states",
+            "joint_feedback",
             self.robot_controller.robot.joint_states_callback,
             10,
         )
@@ -42,15 +45,12 @@ class ControllerNode(Node):
         )
 
         # create a publisher to the joint commands
-        self.joint_cmd_pub = self.create_publisher(JointState, "joint_commands", 10)
-
-        # Initialize the robot controller
-        self.robot_controller = RobotController(config, self)
+        self.joint_cmd_pub = self.create_publisher(JointState, "joint_cmd", 10)
 
     def timer_callback(self):
         self.robot_controller.push_event(RobotEvent.TIMER_EVENT)
         self.timer_counter += 1
-        if self.timer_counter % 2.0 / self.robot_controller.control_dt:
+        if self.timer_counter % 2.0 / self.robot_controller.current_controller.control_dt == 0:
             self.robot_controller.push_event(RobotEvent.TIME_OUT_2S)
             
 

@@ -129,7 +129,7 @@ class Robot(object):
         """
         # Cache the orientation, angular velocity
         orientation = np.array(
-            [msg.orientation.x, msg.orientation.y, msg.orientation.z, msg.orientation.w]
+            [msg.orientation.w, msg.orientation.x, msg.orientation.y, msg.orientation.z]
         )
         angular_velocity = np.array(
             [msg.angular_velocity.x, msg.angular_velocity.y, msg.angular_velocity.z]
