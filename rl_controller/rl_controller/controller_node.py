@@ -22,6 +22,7 @@ class ControllerNode(Node):
             self.get_parameter("config_file").get_parameter_value().string_value
         )
         config = RobotConfig.from_yaml(config_file)
+        self.config = config
 
         # Create a timer to call the control loop
         self.create_timer(config.control_rate, self.timer_callback)
@@ -49,7 +50,7 @@ class ControllerNode(Node):
     def timer_callback(self):
         self.robot_controller.push_event(RobotEvent.TIMER_EVENT)
         self.timer_counter += 1
-        if self.timer_counter % 2.0 / (1.0/50.0):
+        if self.timer_counter % 2.0 / self.robot_controller.control_dt:
             self.robot_controller.push_event(RobotEvent.TIME_OUT_2S)
             
 

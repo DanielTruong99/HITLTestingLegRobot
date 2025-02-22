@@ -7,7 +7,7 @@ from .robot import Robot
 from .robot_config import RobotConfig
 
 
-class PolicyController:
+class PolicyController(object):
     def __init__(self, config: RobotConfig, robot: Robot) -> None:
         """
         Import the policy, initialize process variables.
@@ -24,6 +24,16 @@ class PolicyController:
         self._previous_action = np.zeros(self.config.action_dim)
         self._policy_counter = 0
         self._control_dt = 1.0 / self.config.control_rate
+
+    @property
+    def control_dt(self) -> float:
+        """
+        Get the control time step.
+
+        Returns:
+            float: the control time step
+        """
+        return self._control_dt
 
     def forward(self, command: np.ndarray) -> np.ndarray:
         """
