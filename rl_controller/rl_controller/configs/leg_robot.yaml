@@ -3,3 +3,19 @@ observation_dim: 41
 device: cpu
 control_rate: 50
 policy_file_path: /home/humanoid/DanielWorkspace/HITLTestingLegRobot/rl_controller/rl_controller/models/policy.pt
+joint_names:
+  [
+    "R_hip_joint",
+    "R_hip2_joint",
+    "R_thigh_joint",
+    "R_calf_joint",
+    "R_toe_joint",
+    "L_hip_joint",
+    "L_hip2_joint",
+    "L_thigh_joint",
+    "L_calf_joint",
+    "L_toe_joint",
+  ]
+
+kps: [150.0, 150.0, 200.0, 200.0, 30.0, 150.0, 150.0, 200.0, 200.0, 30.0]
+kds: [5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0]
