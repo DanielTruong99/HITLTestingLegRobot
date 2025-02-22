@@ -101,6 +101,10 @@ class RobotFSM(state_machine.FSM):
 
             status = state_machine.Status.HANDLED_STATUS
         
+        elif event is RobotEvent.ENTRY_SIG:
+            rclpy.logging._root_logger.info("Robot in running state")
+            status = state_machine.Status.HANDLED_STATUS
+
         # Default
         else:
             # check safety
@@ -128,7 +132,6 @@ class RobotFSM(state_machine.FSM):
             # Reset the robot controller
             self.controller.current_controller.reset()
             
-            # Log error
             rclpy.logging._root_logger.error("Robot in error state")
             status = state_machine.Status.HANDLED_STATUS
 

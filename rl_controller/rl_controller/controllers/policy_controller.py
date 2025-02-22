@@ -49,9 +49,8 @@ class PolicyController(object):
         action = self._compute_action(observation)
 
         action = action.cpu().numpy()
-        self._previous_action = action
-        self._policy_counter += 1
-        return action
+        joint_cmds = self._process_action(action)
+        return joint_cmds
 
     def load_policy(self, policy_file_path: str) -> None:
         """
@@ -78,6 +77,20 @@ class PolicyController(object):
         """
         self._previous_action = np.zeros(self.config.action_dim)
         self._policy_counter = 0
+
+    def _process_action(self, action: np.ndarray) -> np.ndarray:
+        """
+        Process the action.
+
+        Args:
+            action (np.ndarray): the action 
+
+        Returns:
+            np.ndarray: the processed action
+        """
+        self._previous_action = action
+        self._policy_counter += 1
+        return action * self.config.action_scale + self.config.default_joint_position
 
     def _compute_action(self, observation: np.ndarray) -> np.ndarray:
         """
