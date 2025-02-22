@@ -23,6 +23,7 @@ class PolicyController:
         # Initialize process variables
         self._previous_action = np.zeros(self.config.action_dim)
         self._policy_counter = 0
+        self._control_dt = 1.0 / self.config.control_rate
 
     def forward(self, command: np.ndarray) -> np.ndarray:
         """
@@ -61,6 +62,13 @@ class PolicyController:
                 f"Failed to load policy from {policy_file_path}: {e}"
             )
 
+    def reset(self) -> None:
+        """
+        Reset the controller.
+        """
+        self._previous_action = np.zeros(self.config.action_dim)
+        self._policy_counter = 0
+
     def _compute_action(self, observation: np.ndarray) -> np.ndarray:
         """
         Compute the action from the policy.
@@ -87,16 +95,23 @@ class PolicyController:
             command (np.ndarray): the action command (v_x, v_y, w_z)
 
         Returns:
-            np.ndarray: the observation [v, w, projected_g, command, q, q_dot, previous_action]
+            np.ndarray: the observation [w, projected_g, command, q, q_dot, previous_action, phase]
         """
         observation = np.zeros(self.config.observation_dim)
         
+        period = 0.8
+        offset = 0.5
+        phase = (self._policy_counter * self._control_dt) % period / period
+        sin_phase = np.sin(2 * np.pi * phase)
+        cos_phase = np.cos(2 * np.pi * phase)
+
         num_actions = self.config.action_dim
-        observation[:3] = self.robot.vB
-        observation[3:6] = self.robot.wB
-        observation[6:9] = self.robot.projected_g
-        observation[9:12] = command
-        observation[12 : 12 + num_actions] = self.robot.joint_positions
-        observation[12 + num_actions : 12 + 2 * num_actions] = self.robot.joint_velocities
-        observation[12 + 2 * num_actions : 12 + 3 * num_actions] = self._previous_action
+        observation[:3] = self.robot.wB
+        observation[3:6] = self.robot.projected_g
+        observation[6:9] = command
+        observation[9 : 9 + num_actions] = self.robot.joint_positions
+        observation[9 + num_actions : 9 + 2 * num_actions] = self.robot.joint_velocities
+        observation[9 + 2 * num_actions : 9 + 3 * num_actions] = self._previous_action
+        observation[9 + 3 * num_actions] = sin_phase
+        observation[9 + 3 * num_actions + 1] = cos_phase
         return observation

@@ -1,4 +1,5 @@
 action_dim: 10
-observation_dim: 42
+observation_dim: 41
 device: cpu
+control_rate: 50
 policy_file_path: /home/humanoid/DanielWorkspace/HITLTestingLegRobot/rl_controller/rl_controller/models/policy.pt

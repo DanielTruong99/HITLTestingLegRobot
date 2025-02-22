@@ -16,8 +16,15 @@ class ControllerNode(Node):
         """
         super().__init__("rl_controller")
 
+        # Load the robot configuration and initialize the robot controller
+        self.declare_parameter("config_file", "configs/leg_robot.yaml")
+        config_file = (
+            self.get_parameter("config_file").get_parameter_value().string_value
+        )
+        config = RobotConfig.from_yaml(config_file)
+
         # Create a timer to call the control loop
-        self.create_timer(1.0 / 50.0, self.timer_callback)
+        self.create_timer(config.control_rate, self.timer_callback)
         self.timer_counter = 0
 
         # create a subscriber to the joint states
@@ -36,12 +43,7 @@ class ControllerNode(Node):
         # create a publisher to the joint commands
         self.joint_cmd_pub = self.create_publisher(JointState, "joint_commands", 10)
 
-        # Load the robot configuration and initialize the robot controller
-        self.declare_parameter("config_file", "configs/leg_robot.yaml")
-        config_file = (
-            self.get_parameter("config_file").get_parameter_value().string_value
-        )
-        config = RobotConfig.from_yaml(config_file)
+        # Initialize the robot controller
         self.robot_controller = RobotController(config, self)
 
     def timer_callback(self):
