@@ -74,7 +74,7 @@ class Robot(object):
         Returns:
             numpy.ndarray: The projected gravity vector.
         """
-        return get_gravity_orientation(self.orientation)
+        return self.orientation
 
     @property
     def joint_positions(self):
@@ -128,8 +128,12 @@ class Robot(object):
             msg (Imu): message from the imu topic
         """
         # Cache the orientation, angular velocity
+        # Temporarily store the projected gravity vector
+        # orientation = np.array(
+        #     [msg.orientation.w, msg.orientation.x, msg.orientation.y, msg.orientation.z]
+        # )
         orientation = np.array(
-            [msg.orientation.w, msg.orientation.x, msg.orientation.y, msg.orientation.z]
+            [msg.orientation.x, msg.orientation.y, msg.orientation.z]
         )
         angular_velocity = np.array(
             [msg.angular_velocity.x, msg.angular_velocity.y, msg.angular_velocity.z]

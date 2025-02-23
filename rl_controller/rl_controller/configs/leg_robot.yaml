@@ -2,7 +2,7 @@ action_dim: 10
 observation_dim: 41
 device: cpu
 control_rate: 50
-policy_file_path: /home/gene/DanielWorkspace/leg_ws/src/rl_controller/rl_controller/models/policy.pt
+policy_file_path: /home/gene/DanielWorkspace/leg_ws/src/rl_controller/rl_controller/models/policy_rnn.pt
 # joint_names:
 #   [
 #     "R_hip_joint",

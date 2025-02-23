@@ -33,7 +33,7 @@ class RobotController(object):
 
         # Initialize the command, action
         self._command = np.zeros(3)
-        self._command[0] = 0.0
+        self._command[0] = 0.7
 
         # Initialize some special messages 
         self._joint_cmd_stop_msg = JointState()

@@ -24,6 +24,7 @@ class RobotFSM(state_machine.FSM):
         super().__init__()
         self.robot: Robot = robot
         self.controller = controller
+        self._is_ok = True
 
     def initial_state(self, event: RobotEvent) -> state_machine.Status:
         """
@@ -39,10 +40,11 @@ class RobotFSM(state_machine.FSM):
 
         if event is RobotEvent.ENTRY_SIG:
             rclpy.logging._root_logger.info("Robot in initial state")
-            status = state_machine.Status.TRAN_STATUS
+            status = state_machine.Status.HANDLED_STATUS
 
         else:
-            if self.robot.is_ready:
+            if self.robot.is_ready and self._is_ok:
+                self._is_ok = False
                 rclpy.logging._root_logger.info("All sensor datas are ready")
                 self.transition_to(self.configuration_state)
                 status = state_machine.Status.TRAN_STATUS
@@ -63,12 +65,23 @@ class RobotFSM(state_machine.FSM):
 
         if event is RobotEvent.ENTRY_SIG:
             # Move to default joint in damping mode
-            self.controller.node_handler.joint_cmd_pub.publish(self.controller._joint_cmd_damping_msg)
+            # self.controller._joint_cmd_damping_msg.header.stamp = self.controller.node_handler.get_clock().now().to_msg()
+            # self.controller.node_handler.joint_cmd_pub.publish(self.controller._joint_cmd_damping_msg)
 
             # Set the timer_counter to 0
             self.controller.node_handler.timer_counter = 0
             rclpy.logging._root_logger.info("Robot in configuration state")
             status = state_machine.Status.HANDLED_STATUS
+
+        # elif event is RobotEvent.EXIT_SIG:
+        #     # Set PD gains
+        #     joint_cmd = JointState()
+        #     joint_cmd.header.stamp = self.controller.node_handler.get_clock().now().to_msg()
+        #     joint_cmd.velocity = self.controller.current_controller.config.kps + self.controller.current_controller.config.kds
+        #     for num_joint in range(self.controller.current_controller.config.action_dim):
+        #         joint_cmd.position.append(0.0)
+        #     self.controller.node_handler.joint_cmd_pub.publish(joint_cmd)
+        #     status = state_machine.Status.HANDLED_STATUS
 
         elif event is RobotEvent.TIME_OUT_2S:
             self.transition_to(self.running_state)
@@ -96,6 +109,7 @@ class RobotFSM(state_machine.FSM):
             
             # Publish the joint commands, velocity field is used to set kp and kd
             joint_cmd_msg = JointState()
+            joint_cmd_msg.header.stamp = self.controller.node_handler.get_clock().now().to_msg()
             for joint_cmd in joint_cmds:
                 joint_cmd_msg.position.append(joint_cmd)
             joint_cmd_msg.velocity = self.controller.current_controller.config.kps + self.controller.current_controller.config.kds
