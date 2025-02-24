@@ -26,6 +26,9 @@ setup(
     license="TODO: License declaration",
     tests_require=["pytest"],
     entry_points={
-        "console_scripts": ["controller_node = rl_controller.controller_node:main"],
+        "console_scripts": [
+            "controller_node = rl_controller.controller_node:main",
+            "remote_controller_node = rl_controller.remote_controller_node:main",
+        ],
     },
 )

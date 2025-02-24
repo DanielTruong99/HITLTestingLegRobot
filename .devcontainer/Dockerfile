@@ -17,6 +17,13 @@ RUN apt update -q \
 # Install Python packages
 RUN pip3 install torch torchvision numpy pyyaml scipy
 
+# Install joystick package
+RUN apt update -q \
+    && apt install -y --no-install-recommends \
+    ros-$ROS_DISTRO-joy \
+    && apt clean \
+    && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+
 # Create and switch to user
 RUN groupadd -g $GID $USERNAME \
     && useradd -lm -u $UID -g $USERNAME -s /bin/bash $USERNAME \
