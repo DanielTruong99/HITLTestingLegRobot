@@ -16,18 +16,18 @@ class RemoteControllerNode(Node):
         # key map is used to map the button name to the buttons binary
         # Example: when pressing Y, buttons = [0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0], therefore equal to 8
         self.KEY_MAP = {
-            1: "A",
-            2: "B",
-            4: "X",
-            16: "Y",
+            2**0: "A",
+            2**1: "B",
+            2**2: "X",
+            2**3: "Y",
             2**4: "LB",
             2**5: "RB",
             2**6: "BACK",
             2**7: "START",
             2**8: "LOGITECH",
         }
-        self.last_key_value = 0
-        self.key_value = 0
+        self.last_key_value = "NONE"
+        self.key_value = "NONE"
         self.start_timer = False
         self.timer_counter = 0
 
@@ -62,7 +62,7 @@ class RemoteControllerNode(Node):
         right_x = -axes[3]
         # right_y = axes[4]
         twist_msg = Twist()
-        twist_msg.header.stamp = self.get_clock().now().to_msg()
+        # twist_msg.header.stamp = self.get_clock().now().to_msg()
         twist_msg.linear.x = left_y
         twist_msg.angular.z = right_x
         twist_msg.linear.y = left_x
@@ -72,22 +72,20 @@ class RemoteControllerNode(Node):
         key_value = 0
         for index, value in enumerate(buttons):
             key_value = key_value + 2**index if value == 1 else key_value
+        key_value = self.KEY_MAP.get(key_value, "NONE")
 
         # Check key event
         if self.last_key_value != key_value:
             key_info_msg = KeyInfo()
-            key_info_msg.header.stamp = self.get_clock().now().to_msg()
-            key_meaning = self.KEY_MAP.get(key_value, None)
-            key_info_msg.key_value = key_meaning
-            self.key_value = key_value
-
-            if self.last_key_value == 0:  # Key is pressed
+            if self.last_key_value == "NONE":  # Key is pressed
                 # Publish the key event
                 key_info_msg.key_event = "KEY_PRESSED"
+                key_info_msg.key_value = key_value
+                self.key_value = key_value
                 self.key_info_pub.publish(key_info_msg)
 
             else:  # Key is released
-                key_info_msg.key_value = key_meaning
+                key_info_msg.key_value = self.key_value
                 key_info_msg.key_event = "KEY_RELEASED"
                 self.key_info_pub.publish(key_info_msg)
                 if self.start_timer is True:
@@ -95,8 +93,9 @@ class RemoteControllerNode(Node):
                     self.timer_counter = 0
 
             # Key is holding, enable timer
-            if self.start_timer is False:
+            if self.start_timer is False and key_info_msg.key_event == "KEY_PRESSED":
                 self.start_timer = True
+                self.timer_counter = 0
 
             # Cache the last key value
             self.last_key_value = key_value
@@ -111,14 +110,14 @@ class RemoteControllerNode(Node):
         self.timer_counter += 1
         if self.timer_counter == 30:  # 3 second
             key_info_msg = KeyInfo()
-            key_info_msg.header.stamp = self.get_clock().now().to_msg()
             key_info_msg.key_value = self.key_value
             key_info_msg.key_event = "KEY_HOLDING_3S"
+            self.key_info_pub.publish(key_info_msg)
         elif self.timer_counter == 50:  # 3 second
             key_info_msg = KeyInfo()
-            key_info_msg.header.stamp = self.get_clock().now().to_msg()
             key_info_msg.key_value = self.key_value
             key_info_msg.key_event = "KEY_HOLDING_5S"
+            self.key_info_pub.publish(key_info_msg)
 
 
 def main(args=None):
