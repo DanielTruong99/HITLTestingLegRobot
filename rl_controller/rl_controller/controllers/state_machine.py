@@ -24,7 +24,6 @@ class RobotFSM(state_machine.FSM):
         super().__init__()
         self.robot: Robot = robot
         self.controller = controller
-        self._is_ok = True
 
     def initial_state(self, event: RobotEvent) -> state_machine.Status:
         """
@@ -42,9 +41,8 @@ class RobotFSM(state_machine.FSM):
             rclpy.logging._root_logger.info("Robot in initial state")
             status = state_machine.Status.HANDLED_STATUS
 
-        else:
-            if self.robot.is_ready and self._is_ok:
-                self._is_ok = False
+        elif event is RobotEvent.TIMER_EVENT:
+            if self.robot.is_ready:
                 rclpy.logging._root_logger.info("All sensor datas are ready")
                 self.transition_to(self.configuration_state)
                 status = state_machine.Status.TRAN_STATUS
@@ -63,27 +61,28 @@ class RobotFSM(state_machine.FSM):
         """
         status = state_machine.Status.IGNORED_STATUS
 
-        if event is RobotEvent.ENTRY_SIG:
-            # Move to default joint in damping mode
-            # self.controller._joint_cmd_damping_msg.header.stamp = self.controller.node_handler.get_clock().now().to_msg()
-            # self.controller.node_handler.joint_cmd_pub.publish(self.controller._joint_cmd_damping_msg)
-
-            # Set the timer_counter to 0
-            self.controller.node_handler.timer_counter = 0
+        if event is RobotEvent.ENTRY_SIG:         
+            # Start the robot controller to move to default joint position
+            self.controller.start_moving_to_default_position()
             rclpy.logging._root_logger.info("Robot in configuration state")
             status = state_machine.Status.HANDLED_STATUS
 
-        # elif event is RobotEvent.EXIT_SIG:
-        #     # Set PD gains
-        #     joint_cmd = JointState()
-        #     joint_cmd.header.stamp = self.controller.node_handler.get_clock().now().to_msg()
-        #     joint_cmd.velocity = self.controller.current_controller.config.kps + self.controller.current_controller.config.kds
-        #     for num_joint in range(self.controller.current_controller.config.action_dim):
-        #         joint_cmd.position.append(0.0)
-        #     self.controller.node_handler.joint_cmd_pub.publish(joint_cmd)
-        #     status = state_machine.Status.HANDLED_STATUS
+        elif event is RobotEvent.TIMER_EVENT:
+            if self.controller.robot_controller.is_start_moving_to_default():
+                # Robot move to its default joint position
+                self.controller.robot_controller.move_to_default_position("kneel")
+
+                # Check if the robot is done moving to default position
+                # Start the timer for waiting 2 seconds
+                if self.controller.robot_controller.is_done_moving_to_default_position():
+                    rclpy.logging._root_logger.info("Robot is done moving to default position")
+                    rclpy.logging._root_logger.info("Robot is waiting for 2 seconds ...")
+                    self.controller.node_handler.start_timer()
+            status = state_machine.Status.HANDLED_STATUS
 
         elif event is RobotEvent.TIME_OUT_2S:
+            # Reset the timer after moving to default position
+            self.controller.node_handler.reset_timer()
             self.transition_to(self.running_state)
             status = state_machine.Status.TRAN_STATUS
 

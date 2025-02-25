@@ -33,7 +33,17 @@ class RobotController(object):
 
         # Initialize the command, action
         self._command = np.zeros(3)
-        self._command[0] = 0.7
+        self._command[0] = 0.0
+
+        # Initialize the start moving to default flag
+        self._is_start_moving_to_default = False
+        self._moving_to_default_duration = 2.0
+        self._moving_to_defaul_counter = 0
+        self._is_done_moving_to_default_position = False
+        self._init_joint_positions = {
+            "stainding": np.array(config.standing_joint_positions),
+            "kneel": np.array(config.kneel_joint_positions),
+        }
 
         # Initialize some special messages 
         self._joint_cmd_stop_msg = JointState()
@@ -91,6 +101,55 @@ class RobotController(object):
             command (np.ndarray): the command to set
         """
         self._command = command
+
+    def is_start_moving_to_default(self) -> bool:
+        """
+        Check if the robot is start moving to the default position.
+
+        Returns:
+            bool: True if the robot is start moving to the default position
+        """
+        return self._is_start_moving_to_default
+
+    def start_moving_to_default(self, duration) -> None:
+        """
+        Start moving to the default position.
+
+        Args:
+            duration (float): the duration to move to the default, in seconds
+        """
+        self._is_start_moving_to_default = True
+        self._moving_to_default_duration = duration
+
+    def move_to_default_position(self, init_pose_type: str) -> None:
+        """
+        Move to the default position.
+
+        Args:
+            init_pose_type (str): the initial pose type, "standing" or "kneel"
+        """
+        self._moving_to_defaul_counter += 1
+        alpha = self._moving_to_defaul_counter / (self._moving_to_default_duration * self.config.control_rate)
+        if alpha >= 1.0:
+            self._is_start_moving_to_default = False
+            self._moving_to_defaul_counter = 0
+            self._is_done_moving_to_default_position = True
+            return
+
+        target_joint_positions = (1 - alpha) * self.robot.joint_positions + alpha * self._init_joint_positions.get(init_pose_type, "standing")
+        self._joint_cmd_damping_msg.header.stamp = self.node_handler.get_clock().now().to_msg()
+        self._joint_cmd_damping_msg.position = target_joint_positions.tolist()
+        self.node_handler.joint_cmd_pub.publish(self._joint_cmd_damping_msg)
+
+
+    def is_done_moving_to_default_position(self) -> bool:
+        """
+        Check if the robot is done moving to the default position.
+
+        Returns:
+            bool: True if the robot is done moving to the default position
+        """
+        return self._is_done_moving_to_default_position
 
     def compute(self) -> np.ndarray:
         """

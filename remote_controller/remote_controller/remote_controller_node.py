@@ -54,19 +54,19 @@ class RemoteControllerNode(Node):
         """
         # Get the joy stick states
         buttons = msg.buttons
-        axes = msg.axes
+        # axes = msg.axes
 
-        # Publish the axis cmd
-        left_x = -axes[0]
-        left_y = axes[1]
-        right_x = -axes[3]
-        # right_y = axes[4]
-        twist_msg = Twist()
-        # twist_msg.header.stamp = self.get_clock().now().to_msg()
-        twist_msg.linear.x = left_y
-        twist_msg.angular.z = right_x
-        twist_msg.linear.y = left_x
-        self.cmd_vel_pub.publish(twist_msg)
+        # # Publish the axis cmd
+        # left_x = -axes[0]
+        # left_y = axes[1]
+        # right_x = -axes[3]
+        # # right_y = axes[4]
+        # twist_msg = Twist()
+        # # twist_msg.header.stamp = self.get_clock().now().to_msg()
+        # twist_msg.linear.x = left_y
+        # twist_msg.angular.z = right_x
+        # twist_msg.linear.y = left_x
+        # self.cmd_vel_pub.publish(twist_msg)
 
         # Calculate the key value
         key_value = 0

@@ -40,7 +40,7 @@
     ],
     "runArgs": [
         "--net=host",
-        "--device=/dev/input/js0",
+        // "--device=/dev/input/js0",
         "--env=DISPLAY",
         "--env=QT_X11_NO_MITSHM=1",
         // "--device-cgroup-rule='c 13:* rmw'", 
