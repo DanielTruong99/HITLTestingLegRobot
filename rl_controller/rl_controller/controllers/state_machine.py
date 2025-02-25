@@ -11,6 +11,9 @@ from ..finite_state_machine import fsm as state_machine
 class RobotEvent(state_machine.BuiltInEvent):
     TIME_OUT_2S = state_machine.BuiltInEvent.USER_SIG
     TIMER_EVENT = state_machine.BuiltInEvent.USER_SIG + 1
+    ABNORMAL_STATE_DETECTED = state_machine.BuiltInEvent.USER_SIG + 2
+    BACK_BUTTON_PRESSED = state_machine.BuiltInEvent.USER_SIG + 3
+    START_BUTTON_3S = state_machine.BuiltInEvent.USER_SIG + 4
  
 
 class RobotFSM(state_machine.FSM):
@@ -63,20 +66,21 @@ class RobotFSM(state_machine.FSM):
 
         if event is RobotEvent.ENTRY_SIG:         
             # Start the robot controller to move to default joint position
-            self.controller.start_moving_to_default_position()
+            self.controller.start_moving_to_default(2.0)
             rclpy.logging._root_logger.info("Robot in configuration state")
             status = state_machine.Status.HANDLED_STATUS
 
         elif event is RobotEvent.TIMER_EVENT:
-            if self.controller.robot_controller.is_start_moving_to_default():
+            if self.controller.is_start_moving_to_default():
                 # Robot move to its default joint position
-                self.controller.robot_controller.move_to_default_position("kneel")
+                self.controller.move_to_default_position("kneel")
 
                 # Check if the robot is done moving to default position
                 # Start the timer for waiting 2 seconds
-                if self.controller.robot_controller.is_done_moving_to_default_position():
-                    rclpy.logging._root_logger.info("Robot is done moving to default position")
+                if self.controller.is_done_moving_to_default_position():
+                    rclpy.logging._root_logger.info("Robot is done moving to kneeling position")
                     rclpy.logging._root_logger.info("Robot is waiting for 2 seconds ...")
+                    self.controller._is_done_moving_to_default_position = False
                     self.controller.node_handler.start_timer()
             status = state_machine.Status.HANDLED_STATUS
 
@@ -120,9 +124,16 @@ class RobotFSM(state_machine.FSM):
             rclpy.logging._root_logger.info("Robot in running state")
             status = state_machine.Status.HANDLED_STATUS
 
+        elif event is RobotEvent.ABNORMAL_STATE_DETECTED:
+            self.transition_to(self.error_state)
+            status = state_machine.Status.TRAN_STATUS
+
         # Default
         else:
-            # check safety
+            if self.robot.is_safe() == False:
+                rclpy.logging._root_logger.error("Abnormal state detected!")
+                self.controller.push_event(RobotEvent.ABNORMAL_STATE_DETECTED)
+                
             status = state_machine.Status.HANDLED_STATUS
 
 
@@ -149,5 +160,23 @@ class RobotFSM(state_machine.FSM):
             
             rclpy.logging._root_logger.error("Robot in error state")
             status = state_machine.Status.HANDLED_STATUS
+
+        elif event is RobotEvent.BACK_BUTTON_PRESSED:
+            self.controller.start_moving_to_default(5.0)
+            status = state_machine.Status.HANDLED_STATUS
+
+        elif event is RobotEvent.TIMER_EVENT:
+            if self.controller.is_start_moving_to_default():
+                # Robot move to its default joint position
+                self.controller.move_to_default_position("stand")
+
+                # Check if the robot is done moving to default position
+                if self.controller.is_done_moving_to_default_position():
+                    rclpy.logging._root_logger.info("Robot is done moving to standing position")
+            status = state_machine.Status.HANDLED_STATUS
+
+        elif event is RobotEvent.START_BUTTON_3S:
+            self.transition_to(self.initial_state)
+            status = state_machine.Status.TRAN_STATUS
 
         return status

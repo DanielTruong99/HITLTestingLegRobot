@@ -96,6 +96,21 @@ class Robot(object):
         """
         return self.leg_states.velocity
 
+    def is_safe(self) -> bool:
+        """
+        Check if the robot is in a safe state.
+
+        Returns:
+            bool: True if the robot is in a safe state.
+        """
+        is_safe = True
+
+        # Check roll and pitch angles
+        is_safe = is_safe and bool(np.abs(self.projected_g[0]) < 0.7)
+        is_safe = is_safe and bool(np.abs(self.projected_g[1]) < 0.7)
+
+        return is_safe
+
     def joint_states_callback(self, msg: JointState) -> None:
         """
         Callback for the ros joint states subscriber.

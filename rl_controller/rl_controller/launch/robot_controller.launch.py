@@ -12,7 +12,7 @@ def generate_launch_description():
     rl_controller = Node(
         package="rl_controller",
         executable="controller_node",
-        name="sim",
+        name="rl_controller_node",
         parameters=[{"config_file": default_config_file_path}],
     )
     

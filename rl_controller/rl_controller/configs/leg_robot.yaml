@@ -16,7 +16,8 @@ policy_file_path: /home/gene/DanielWorkspace/leg_ws/src/rl_controller/rl_control
 #     "L_calf_joint",
 #     "L_toe_joint",
 #   ]
-max_linear_velocity: 2.5  # m/s
+max_linear_velocity_x: 1.7  # m/s
+max_linear_velocity_y: 0.5  # m/s
 max_angular_velocity: 1.0 # rad/s
 action_scale: 1.0
 default_joint_positions: [0.0, 0.0, 0.0, 0.0, -0.2, -0.2, 0.25, 0.25, 0.0, 0.0]

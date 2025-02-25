@@ -17,10 +17,11 @@ class RobotConfig:
     action_scale: float
     default_joint_positions: List[float]
     standing_joint_positions: List[float]
-    kneel_joint_positions: List[float]
+    kneeling_joint_positions: List[float]
     kps: List[float]
     kds: List[float]
-    max_linear_velocity: float
+    max_linear_velocity_x: float
+    max_linear_velocity_y: float
     max_angular_velocity: float
 
     @classmethod

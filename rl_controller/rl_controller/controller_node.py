@@ -31,6 +31,7 @@ class ControllerNode(Node):
         # Create a timer to call the control loop
         self.create_timer(1.0 / config.control_rate, self.timer_callback)
         self.timer_counter = 0
+        self.is_on_timer = False
 
         # Create a subscriber to the joint states
         self.joint_state_sub = self.create_subscription(
@@ -47,7 +48,7 @@ class ControllerNode(Node):
 
         # Crerate a subscriber to the cmd_vel
         self.joystick_sub = self.create_subscription(
-            Joy, "cmd_vel", self.joystick_callback, 10
+            Joy, "joy", self.joystick_callback, 10
         )
 
         # Create a subscriber to the key_info
@@ -59,7 +60,7 @@ class ControllerNode(Node):
         self.joint_cmd_pub = self.create_publisher(JointState, "joint_cmd", 10)
 
         # Internal variables
-        self.is_on_timer = False
+        
 
     def key_info_callback(self, msg: KeyInfo):
         """
@@ -68,7 +69,12 @@ class ControllerNode(Node):
         Args:
             msg (KeyInfo): the message
         """
-        pass
+        key_value = msg.key_value
+        key_event = msg.key_event
+        if key_value == "START" and key_event == "KEY_HOLDING_3S":
+            self.robot_controller.push_event(RobotEvent.START_BUTTON_3S)
+        elif key_value == "BACK" and key_event == "KEY_PRESSED":
+            self.robot_controller.push_event(RobotEvent.BACK_BUTTON_PRESSED)
 
     def joystick_callback(self, msg: Joy):
         """
@@ -81,9 +87,9 @@ class ControllerNode(Node):
 
         left_x = -axes[0]
         left_y = axes[1]
-        right_x = -axes[3]
-        v_x = left_x * self.robot_controller.config.max_linear_velocity
-        v_y = left_y * self.robot_controller.config.max_linear_velocity
+        right_x = axes[3]
+        v_y = left_x * self.robot_controller.config.max_linear_velocity_y
+        v_x = left_y * self.robot_controller.config.max_linear_velocity_x
         w = right_x * self.robot_controller.config.max_angular_velocity
 
         self.robot_controller.set_command(np.array([v_x, v_y, w]))
@@ -94,7 +100,7 @@ class ControllerNode(Node):
             return
         
         self.timer_counter += 1
-        if self.timer_counter % 2.0 / self.robot_controller.current_controller.control_dt == 0:
+        if self.timer_counter > (2.0 / self.robot_controller.current_controller.control_dt):
             self.robot_controller.push_event(RobotEvent.TIME_OUT_2S)
 
     def reset_timer(self):

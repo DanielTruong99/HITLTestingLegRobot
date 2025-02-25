@@ -39,9 +39,6 @@ class RemoteControllerNode(Node):
             10,
         )
 
-        # Create a publisher to the cmd_vel
-        self.cmd_vel_pub = self.create_publisher(Twist, "vel_cmd", 10)
-
         # Create key infor publisher
         self.key_info_pub = self.create_publisher(KeyInfo, "key_info", 10)
 

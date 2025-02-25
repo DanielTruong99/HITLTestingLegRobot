@@ -18,6 +18,7 @@ class RobotController(object):
             config (RobotConfig): the configuration object
         """
         self.node_handler: Node = node_handler
+        self.config = config
 
         # Initialize the robot object for state handling
         self.robot: Robot = Robot(config)
@@ -41,8 +42,8 @@ class RobotController(object):
         self._moving_to_defaul_counter = 0
         self._is_done_moving_to_default_position = False
         self._init_joint_positions = {
-            "stainding": np.array(config.standing_joint_positions),
-            "kneel": np.array(config.kneel_joint_positions),
+            "stand": np.array(config.standing_joint_positions),
+            "kneel": np.array(config.kneeling_joint_positions),
         }
 
         # Initialize some special messages 
@@ -126,7 +127,7 @@ class RobotController(object):
         Move to the default position.
 
         Args:
-            init_pose_type (str): the initial pose type, "standing" or "kneel"
+            init_pose_type (str): the initial pose type, "stand" or "kneel"
         """
         self._moving_to_defaul_counter += 1
         alpha = self._moving_to_defaul_counter / (self._moving_to_default_duration * self.config.control_rate)
@@ -136,7 +137,7 @@ class RobotController(object):
             self._is_done_moving_to_default_position = True
             return
 
-        target_joint_positions = (1 - alpha) * self.robot.joint_positions + alpha * self._init_joint_positions.get(init_pose_type, "standing")
+        target_joint_positions = (1 - alpha) * self.robot.joint_positions + alpha * self._init_joint_positions.get(init_pose_type, "stand")
         self._joint_cmd_damping_msg.header.stamp = self.node_handler.get_clock().now().to_msg()
         self._joint_cmd_damping_msg.position = target_joint_positions.tolist()
         self.node_handler.joint_cmd_pub.publish(self._joint_cmd_damping_msg)
